@@ -2,9 +2,10 @@ name: Docker Build and Push to ECR
 
 on:
   push:
-    branches: [develop ]
-  pull_request:
-    branches: [develop ]
+    branches: [develop ]  
+
+env:
+    AWS_ECR_URL: 248189943700-dkr.ecr.eu-west-1.amazonaws.com/app-bluengo-jfl
 
 jobs:
   build-and-push:
@@ -23,23 +24,17 @@ jobs:
         aws-region: eu-east-1
     
     - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-    
-    - name: Build and Push Server Image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: bluengo-server
-        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.server .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+       aws ecr get-login-password --region eu-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
     
-    - name: Build and Push Worker Image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: bluengo-worker
-        IMAGE_TAG: ${{ github.sha }}
+    - name: Build Docker Images
+      run:
+        cd simple-worker
+        docker build -t $AWS_ECR_URL:app-bluengo-server -f Dockerfile.server .
+        docker build -t $AWS_ECR_URL:app-bluengo-server -f Dockerfile.worker .
+    
+    - name: Push Docker Images to ECR      
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.worker .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $AWS_ECR_URL:app-bluengo-server
+        docker push $AWS_ECR_URL:app-bluengo-worker
+        
