@@ -24,7 +24,7 @@ jobs:
     
     - name: Login to Amazon ECR
       run: |
-       aws ecr get-login-password --region eu-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+       aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $AWS_ECR_URL
     
     - name: Build Docker Images
       run:
