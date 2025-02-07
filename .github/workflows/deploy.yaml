@@ -25,15 +25,18 @@ jobs:
     - name: Login to Amazon ECR
       run: |
        aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $AWS_ECR_URL
-    
+
     - name: Build Docker Images
-      run:
-        cd simple-worker
-        docker build -t $AWS_ECR_URL:app-bluengo-server -f Dockerfile.server .
+      run: |
+        cd simple-worker && \
+        docker build -t $AWS_ECR_URL:app-bluengo-server -f Dockerfile.server . && \
         docker build -t $AWS_ECR_URL:app-bluengo-worker -f Dockerfile.worker .
+    
+    
     
     - name: Push Docker Images to ECR      
       run: |
-        docker push $AWS_ECR_URL:app-bluengo-server
+       cd simple-worker && \
+        docker push $AWS_ECR_URL:app-bluengo-server && \
         docker push $AWS_ECR_URL:app-bluengo-worker
         
