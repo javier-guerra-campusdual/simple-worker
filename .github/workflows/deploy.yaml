@@ -30,7 +30,7 @@ jobs:
       run:
         cd simple-worker
         docker build -t $AWS_ECR_URL:app-bluengo-server -f Dockerfile.server .
-        docker build -t $AWS_ECR_URL:app-bluengo-server -f Dockerfile.worker .
+        docker build -t $AWS_ECR_URL:app-bluengo-worker -f Dockerfile.worker .
     
     - name: Push Docker Images to ECR      
       run: |
