@@ -1,0 +1,87 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - develop
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.21'
+  BINARY_NAME: 'bluengo-worker'
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        include:
+          - os: windows
+            arch: amd64
+            extension: .exe
+          - os: linux
+            arch: amd64
+            extension: ''
+          - os: linux
+            arch: arm64
+            extension: ''
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          
+      - name: Set version
+        id: set_version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "VERSION=$(date +'%Y.%m.%d')-develop" >> $GITHUB_ENV
+          fi
+          
+      - name: Build
+        run: |
+          mkdir -p build
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build \
+            -ldflags="-X main.Version=${{ env.VERSION }}" \
+            -o build/${BINARY_NAME}_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.extension }} \
+            main.go
+            
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}-${{ matrix.arch }}
+          path: build/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: build
+          
+      - name: Generate checksums
+        run: |
+          cd build
+          find . -type f -exec sha256sum {} \; > checksums.txt
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/**/*
+          tag_name: ${{ env.VERSION }}
+          draft: false
+          prerelease: ${{ github.ref != 'refs/heads/develop' }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

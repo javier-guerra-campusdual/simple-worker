@@ -16,7 +16,8 @@ import (
 	"time"
 )
 
-var version = "1.0.0"
+// Versio
+var version = "1.0.0" 
 
 // Global debug flag.
 var debug bool
