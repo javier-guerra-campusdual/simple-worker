@@ -1,0 +1,30 @@
+resource "aws_ssm_document" "setup_bluengo" {
+  name          = "setup_bluengo"
+  document_type = "Command"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Setup Bluengo EC2 instance"
+    mainSteps = [
+      {
+        action = "aws:runShellScript"
+        name   = "configureEC2"
+        inputs = {
+          runCommand = [
+            "chmod +x /home/ec2-user/setup_ec2_ssm.sh",
+            "sh /home/ec2-user/setup_ec2_ssm.sh"
+          ]
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_ssm_association" "bluengo_ssm_run" {
+  name = aws_ssm_document.setup_bluengo.name
+
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.bluengo_server.id]
+  }
+}

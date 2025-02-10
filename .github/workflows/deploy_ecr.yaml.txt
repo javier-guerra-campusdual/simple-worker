@@ -2,7 +2,7 @@ name: Docker Build and Push to ECR
 
 on:
  push:
-   branches: [develop]  
+   branches: [main]  
 
 env:
    AWS_ECR_URL: 248189943700.dkr.ecr.eu-west-1.amazonaws.com/ecr-jgl-deploy
